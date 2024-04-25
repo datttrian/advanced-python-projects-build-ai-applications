@@ -38,7 +38,7 @@ import awswrangler as wr  # Import AWS Wrangler for working with AWS services
 
 import boto3  # Import the boto3 library for interacting with AWS services
 
-# Import the OS module for system-related operations
+# Import the os module for system-related operations
 
 # Check if the operating system is Windows
 if os.name == "nt":  # Windows
@@ -53,9 +53,25 @@ if os.name == "nt":  # Windows
 # S3_SECRET = os.environ.get("S3_SECRET")  # AWS S3 secret access key
 # S3_BUCKET = os.environ.get("S3_BUCKET")  # AWS S3 bucket name
 # S3_REGION = os.environ.get("S3_REGION")  # AWS S3 region
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")  # OpenAI API key
-MONGO_URL = os.environ.get("MONGO_URL")  # MongoDB connection URL
+# OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")  # OpenAI API key
+# MONGO_URL = os.environ.get("MONGO_URL")  # MongoDB connection URL
 # S3_PATH = os.environ.get("S3_PATH")  # AWS S3 pathi
+
+import os
+from pymongo.mongo_client import MongoClient
+from pymongo.server_api import ServerApi
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Fetch MongoDB URI from environment variables
+MONGO_URL = os.getenv("MONGO_URL")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
+if MONGO_URL is None:
+    raise ValueError("MONGO_URL environment variable is not set")
+
 
 S3_KEY = ""
 S3_SECRET = ""
@@ -65,8 +81,6 @@ S3_PATH = ""
 
 
 try:
-    MONGO_URL = MONGO_URL
-
     # Connect to the MongoDB using the provided MONGO_URL
     client = pymongo.MongoClient(MONGO_URL, uuidRepresentation="standard")
     # Access the "chat_with_doc" database
@@ -99,7 +113,7 @@ def get_response(
     file_name: str,
     session_id: str,
     query: str,
-    model: str = "gpt-3.5-turbo-16k",
+    model: str = "gpt-3.5-turbo",
     temperature: float = 0,
 ):
     print("file name is ", file_name)
@@ -148,18 +162,18 @@ def get_response(
     else:
         loader = PyPDFLoader(file_name)
 
-    # 1. load data
+    # 1.load data
     data = loader.load()
-    # 2. split data so it can fit GPT token limit
+    # 2.split data so it can fit gpt token limit
     print("splitting ..")
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=1000, chunk_overlap=0, separators=["\n", " ", ""]
     )
 
     all_splits = text_splitter.split_documents(data)
-    # 3. store data in vector db to conduct search
+    # 3. store data in vector db to conduct searc
     vectorstore = FAISS.from_documents(all_splits, embeddings)
-    # 4. init OpenAI
+    # 4. Init openai
     llm = ChatOpenAI(model_name=model, temperature=temperature)
 
     # 5. pass the data to openai chain using vector db
@@ -204,16 +218,16 @@ def load_memory_to_pass(session_id: str):
     data = conversationcol.find_one(
         {"session_id": session_id}
     )  # find the document with the session id
-    history = []  # create empty array (in case we do not have any history)
+    history = []  # create empty array (incase we do not have any history)
     if data:  # check if data is not None
         data = data["conversation"]  # get the conversation field
 
         for x in range(0, len(data), 2):  # iterate over the field
             history.extend(
                 [(data[x], data[x + 1])]
-            )  # our history is expected format is [(human_message,ai_message)] , the even index has human message and odd has AI response
+            )  # our history is expected format is [(human_message,ai_message)] , the even index has human message and odd has ai response
     print(history)
-    return history  # return history
+    return history  # retun history
 
 
 def get_session() -> str:
@@ -255,7 +269,7 @@ def add_session_history(session_id: str, new_values: List):
             {
                 "session_id": session_id,
                 "conversation": new_values,
-            }  # to initiate a history under a new session, note we uses insert_one
+            }  # to initiate a history under a newsession, note we uses insert_one
         )
 
 
