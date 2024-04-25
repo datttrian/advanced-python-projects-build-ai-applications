@@ -14,6 +14,8 @@ class ChatBot:
             user_message = input("You: ").strip()
 
         # Analyzing the sentiment of the user's message.
+        self.sentiment_analyzer = TextBlob(user_message)
+        sentiment_score = self.sentiment_analyzer.sentiment.polarity
 
         # Generating the chatbot's response based on sentiment.
 
