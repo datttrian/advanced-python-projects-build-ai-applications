@@ -183,3 +183,42 @@ for model_name, model in models.items():
     print("Mean Squared Error:", mean_squared_error(y_test, y_pred))
     print("R-squared:", r2_score(y_test, y_pred))
     print()
+
+# We want this dataframe to be same as the training data so that model can predict the value
+zip_codes_df = top_5_zip_codes_df.drop(["Zip Code", "Latte Price"], axis=1)
+zip_codes_df = sc.transform(zip_codes_df)
+
+for model_name, model in models.items():
+    # Predict the prices for lattes in the top 5 zip codes
+    predicted_prices = model.predict(zip_codes_df)
+    print(f"{model_name} Predicted Prices for Top 5 Zip Codes:")
+    print(predicted_prices)
+    print()
+
+predictions = {}
+
+for model_name, model in models.items():
+    # Predict the prices for lattes in the top 5 zip codes
+    predicted_prices = model.predict(zip_codes_df)
+    predictions[model_name] = predicted_prices
+
+# Convert the predictions dictionary to a DataFrame
+predictions_df = pd.DataFrame(predictions)
+# Add the zip codes to the predictions DataFrame
+predictions_df["Zip Code"] = top_5_zip_codes_df["Zip Code"].values
+
+# Rearrange the columns to have 'Zip Code' as the first column
+cols = ["Zip Code"] + [
+    col for col in predictions_df.columns if col != "Zip Code"
+]
+predictions_df = predictions_df[cols]
+
+predictions_df
+
+agg_df = (
+    predictions_df.groupby("Zip Code")["Gradient Boosting"]
+    .agg([("Highest", "max"), ("Lowest", "min")])
+    .reset_index()
+)
+agg_df.columns = ["Zip Code", "Highest", "Lowest"]
+print(agg_df)
