@@ -5,6 +5,9 @@ from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 import warnings
 from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 warnings.simplefilter("ignore")
 
@@ -132,9 +135,51 @@ sc = StandardScaler()
 X_train = sc.fit_transform(X_train)
 X_test = sc.transform(X_test)
 
-#Model Selection
+# Model Selection
 models = {
-    'Linear Regression': LinearRegression(),
-    'Random Forest': RandomForestRegressor(),
-    'Gradient Boosting': GradientBoostingRegressor()
+    "Linear Regression": LinearRegression(),
+    "Random Forest": RandomForestRegressor(),
+    "Gradient Boosting": GradientBoostingRegressor(),
 }
+
+# Hyperparameter Tuning
+param_grid = {
+    "Random Forest": {
+        "n_estimators": [50, 100, 200],
+        "max_depth": [None, 10, 20],
+    },
+    "Gradient Boosting": {
+        "n_estimators": [50, 100, 200],
+        "learning_rate": [0.01, 0.1, 0.2],
+        "max_depth": [3, 5, 10],
+    },
+}
+
+for model_name, model in models.items():
+    if model_name in param_grid:
+        # Perform hyperparameter tuning using GridSearchCV
+        grid_search = GridSearchCV(
+            model,
+            param_grid[model_name],
+            cv=5,
+            scoring="neg_mean_squared_error",
+        )
+        grid_search.fit(X, y)
+
+        # Set the best hyperparameters to the model
+        models[model_name] = grid_search.best_estimator_
+
+# Model Training
+for model_name, model in models.items():
+    # Train the model on the training set
+    model.fit(X_train, y_train)
+
+# Model Evaluation
+for model_name, model in models.items():
+    # Evaluate the model on the testing set
+    y_pred = model.predict(X_test)
+    print(f"{model_name} Metrics:")
+    print("Mean Absolute Error:", mean_absolute_error(y_test, y_pred))
+    print("Mean Squared Error:", mean_squared_error(y_test, y_pred))
+    print("R-squared:", r2_score(y_test, y_pred))
+    print()
