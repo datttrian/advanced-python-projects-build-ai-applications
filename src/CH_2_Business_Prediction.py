@@ -1,8 +1,10 @@
 # import all of the required libraries and classes right here
 import pandas as pd
 import re
+from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 import warnings
+from sklearn.model_selection import train_test_split, GridSearchCV
 
 warnings.simplefilter("ignore")
 
